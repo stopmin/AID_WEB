@@ -1,22 +1,30 @@
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+
+from .api import api_router
 
 app = FastAPI()
 
+app.mount("/static", StaticFiles(directory="templates"), name="static")
 
-@app.get("/")
-def test():
-    return {"message": "test"}
+template = Jinja2Templates(directory="templates")  # terminal 기준 path
 
 
-@app.on_event("startup")
+app.include_router(
+    api_router, prefix=""
+)  # 여기서 api_router는 ./api/endpoint/api.py에 있는 api_router변수로, submit, auth api가 include돼있다.
+
+
+@app.get("/", response_class=HTMLResponse)
+def home_page(request: Request, msg: str = None):
+    return template.TemplateResponse("home.html", context={"request": request, "msg": msg})
+
+
+@app.on_event("startup")  # 서버 실행시
 def start():
-    # TODO
-    # DB 연결
-    # client = MongoClient(
-    #     "mongodb://admin_user:password@localhost:27017/?authMechanism=DEFAULT"
-    # )
-    # db = client["submit"]
     pass
 
 
